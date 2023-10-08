@@ -1,5 +1,6 @@
 from http import HTTPStatus
 from api.questions import api
+import re
 from utils.assertions import Assert
 
 
@@ -8,6 +9,7 @@ def test_list_users():
 
     assert res.status_code == HTTPStatus.OK
     # Assert.validate_schema(res.json())
+    assert res.headers['Cache-Control'] == 'max-age=14400'
 
 
 def test_single_user_not_found():
@@ -25,6 +27,7 @@ def test_single_user():
     # Assert.validate_schema(res_body)
 
     assert res_body["data"]["first_name"] == 'Janet'
+    assert re.fullmatch(r'\w[a-z]{5}', res_body['data']['last_name'])
     example = {
         "data": {
             "id": 2,
@@ -41,17 +44,17 @@ def test_single_user():
     assert example == res_body  # Сравниваем эти два
 
 
-# def test_status():
-#     res = api.create('Janet', 'home')
-#     res_body = res.json()
-#
-#     assert res.status_code == HTTPStatus.CREATED
-#     # Assert.validate_schema(res.json())
-#
-#     assert res_body['name'] == 'Janet'
-#     assert res_body['job'] == 'home'
-#
-#     assert api.delete_user(res.json()['id']).status_code == HTTPStatus.NO_CONTENT
+def test_create_0():
+    res = api.create('Jon', 'pilot')
+    res_body = res.json()
+
+    assert res.status_code == HTTPStatus.CREATED
+    # Assert.validate_schema(res.json())
+
+    assert res_body['name'] == 'Jon'
+    assert res_body['job'] == 'pilot'
+
+    assert api.delete_user(res.json()['id']).status_code == HTTPStatus.NO_CONTENT
 
 
 def test_create():
@@ -62,6 +65,7 @@ def test_create():
     assert res.status_code == HTTPStatus.CREATED
     assert res.json()['name'] == name
     assert res.json()['job'] == job
+    assert re.fullmatch(r'\d{1,4}', res.json()['id'])
 
     assert api.delete_user(res.json()['id']).status_code == HTTPStatus.NO_CONTENT
     # Assert.validate_schema(res.json())
